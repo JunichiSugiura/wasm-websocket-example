@@ -1,3 +1,8 @@
-import { start } from 'wasm-ws'
+import { WebSocketClient } from 'wasm-ws'
 
-start();
+const ws = new WebSocketClient('wss://echo.websocket.org')
+
+setTimeout(() => {
+  ws.close()
+  ws.free()
+}, 3 * 1000);
