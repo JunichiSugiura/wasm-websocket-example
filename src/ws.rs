@@ -42,22 +42,32 @@ impl WebSocketClient {
         ws.set_onmessage(Some(handle_message.as_ref().unchecked_ref()));
         handle_message.forget();
 
-        let ws_clone = ws.clone();
         let handle_open = Closure::wrap(Box::new(move |_| {
             console_log!("WebSocket: CONNECT");
-
-            match ws.send_with_str("ping") {
-                Ok(_) => console_log!("WebSocket: Message is sent"),
-                Err(err) => console_log!("WebSocket: Failed to send message: {:?}", err),
-            }
         }) as Box<dyn FnMut(JsValue)>);
-        ws_clone.set_onopen(Some(handle_open.as_ref().unchecked_ref()));
+        ws.set_onopen(Some(handle_open.as_ref().unchecked_ref()));
         handle_open.forget();
 
-        WebSocketClient { ws: ws_clone }
+        WebSocketClient { ws }
+    }
+
+    pub fn send(&self, message: &str) {
+        if self.is_open() {
+            &self
+                .ws
+                .send_with_str(message)
+                .expect("WebSocket: Failed to send message");
+        }
     }
 
     pub fn close(&self) {
         &self.ws.close();
+    }
+}
+
+#[wasm_bindgen]
+impl WebSocketClient {
+    fn is_open(&self) -> bool {
+        self.ws.ready_state() == WebSocket::OPEN
     }
 }
